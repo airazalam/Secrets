@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const ejs = require("ejs");
+const encrypt = require("mongoose-encryption");
 const app = express();
 
 
@@ -17,10 +18,13 @@ mongoose.connect("mongodb+srv://airaz_alam:3aiMzUppp1JLADvf@cluster0.jzretlj.mon
     console.error('connection error');
 });
 
-const userSchema = {
+const userSchema =new mongoose.Schema ({
   email: String,
   password: String
-};
+});
+const secret = "hakunaMatata";
+userSchema.plugin(encrypt,{secret:secret , encryptedFields:["password"]});
+
 const User = mongoose.model("User",userSchema);
 
 
@@ -66,9 +70,12 @@ app.get("/register",function(req,res){
     
     // res.render("post",{title:post.title ,content:post.content});
     
-    await User.findOne({email: req.body.username, password: req.body.password}).then((foundUser) => {
+    await User.findOne({email: req.body.username}).then((foundUser) => {
       if(foundUser){
-        res.render("secrets");
+        if(foundUser.password === req.body.password){
+          res.render("secrets");
+        }
+        
       }
       else{
         res.send("WRONG EMAIL OR PASSWORD");
