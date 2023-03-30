@@ -4,13 +4,14 @@ const mongoose = require("mongoose");
 const ejs = require("ejs");
 const encrypt = require("mongoose-encryption");
 const app = express();
+require('dotenv').config();
 
 
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
-mongoose.connect("mongodb+srv://airaz_alam:3aiMzUppp1JLADvf@cluster0.jzretlj.mongodb.net/userDB")
+mongoose.connect("mongodb+srv://airaz_alam:"+process.env.MONGODB_ATLAS_PASSWORD+"@cluster0.jzretlj.mongodb.net/userDB")
 .then(() => {
     console.info('connected successfully')  
 })
@@ -22,8 +23,8 @@ const userSchema =new mongoose.Schema ({
   email: String,
   password: String
 });
-const secret = "hakunaMatata";
-userSchema.plugin(encrypt,{secret:secret , encryptedFields:["password"]});
+
+userSchema.plugin(encrypt,{secret:process.env.SECRET , encryptedFields:["password"]});
 
 const User = mongoose.model("User",userSchema);
 
