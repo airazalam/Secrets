@@ -2,9 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const ejs = require("ejs");
-const md5 = require("md5");
+const bcrypt = require("bcrypt");
 const app = express();
 require('dotenv').config();
+const saltRounds = 10;
 
 
 app.set('view engine', 'ejs');
@@ -51,33 +52,33 @@ app.get("/register",function(req,res){
   });
   app.post("/register",async function(req,res){
 
-
-    const newUser= new User({
-      email: req.body.username,
-      password: md5(req.body.password)
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+      const newUser= new User({
+        email: req.body.username,
+        password: hash
+      });
+      newUser.save().then(() => {
+        res.render("secrets");
+    })
+    .catch((error) => {
+        console.error(error);
     });
-    newUser.save().then(() => {
-      res.render("secrets");
-  })
-  .catch((error) => {
-      console.error(error);
   });
+    
 });
   app.post("/login",async function(req,res){
 
-    // const foundUser=await User.findOne({email: req.body.username, password: req.body.password});
-    // console.log(foundUser);
-    
-    // res.render("post",{title:post.title ,content:post.content});
-    const insertedPassword = md5(req.body.password);
+    const insertedPassword = req.body.password;
     await User.findOne({email: req.body.username}).then((foundUser) => {
       if(foundUser){
-        if(foundUser.password === insertedPassword ){
-          res.render("secrets");
-        }
-        else{
-          res.send("WRONG EMAIL OR PASSWORD");
-        }
+        bcrypt.compare(insertedPassword, foundUser.password, function(err, result) {
+          if(result === true){
+            res.render("secrets");
+          }
+          else{
+            res.send("WRONG EMAIL OR PASSWORD");
+          }
+      });
         
       }
       else{
